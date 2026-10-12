@@ -3,7 +3,7 @@ import time
 import json
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -65,7 +65,7 @@ def process_job(job_id: str):
             job.stage = stage
         if status:
             job.status = status
-        job.updated_at = datetime.utcnow()
+        job.updated_at = datetime.now(timezone.utc)
         db.commit()
 
     try:
@@ -207,7 +207,7 @@ def process_job(job_id: str):
                 clip_id=clip_row.id,
                 attempt_number=1,
                 status="rendering",
-                started_at=datetime.utcnow()
+                started_at=datetime.now(timezone.utc)
             )
             db.add(attempt)
             db.commit()
@@ -236,7 +236,7 @@ def process_job(job_id: str):
                 clip_row.status = "completed"
 
                 attempt.status = "success"
-                attempt.ended_at = datetime.utcnow()
+                attempt.ended_at = datetime.now(timezone.utc)
                 attempt.render_duration_sec = round(time.time() - start_t, 2)
                 db.commit()
 
@@ -262,7 +262,7 @@ def process_job(job_id: str):
             except Exception as render_err:
                 attempt.status = "failed"
                 attempt.error_log = str(render_err)
-                attempt.ended_at = datetime.utcnow()
+                attempt.ended_at = datetime.now(timezone.utc)
                 clip_row.status = "failed"
                 clip_row.error_message = str(render_err)
                 db.commit()
@@ -279,7 +279,7 @@ def process_job(job_id: str):
                 "target_audience": job.target_audience,
                 "status": "completed",
                 "created_at": job.created_at,
-                "completed_at": datetime.utcnow()
+                "completed_at": datetime.now(timezone.utc)
             },
             clips_data=rendered_clips_data,
             output_dir=job_output_dir
@@ -290,7 +290,7 @@ def process_job(job_id: str):
         job.stage = "completed"
         job.progress = 100
         job.status_message = f"Successfully generated and rendered {len(rendered_clips_data)} vertical clips (all 60s+)."
-        job.completed_at = datetime.utcnow()
+        job.completed_at = datetime.now(timezone.utc)
         db.commit()
         logger.info(f"Job {job.id} completed successfully with {len(rendered_clips_data)} clips.")
 

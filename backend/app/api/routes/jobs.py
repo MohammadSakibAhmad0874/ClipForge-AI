@@ -2,7 +2,7 @@ import uuid
 import logging
 from pathlib import Path
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, status
 from sqlalchemy.orm import Session
 
@@ -51,7 +51,7 @@ async def create_job(
             detail="Minimum clip duration must be at least 60.0 seconds."
         )
 
-    job_id = f"job_{datetime.utcnow().strftime('%Y%m%d')}_{uuid.uuid4().hex[:8]}"
+    job_id = f"job_{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:8]}"
     job_input_dir = settings.inputs_dir / job_id
     job_input_dir.mkdir(parents=True, exist_ok=True)
 
