@@ -1,0 +1,67 @@
+services:
+  # ClipForge FastAPI Backend Web Service
+  - type: web
+    name: clipforge-api
+    runtime: python
+    region: oregon
+    plan: standard
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clipforge-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: clipforge-redis
+          property: connectionString
+      - key: STORAGE_ROOT
+        value: /var/data/storage
+    disk:
+      name: clipforge-storage
+      mountPath: /var/data/storage
+      sizeGB: 50
+
+  # ClipForge Video & Speech Worker
+  - type: worker
+    name: clipforge-worker
+    runtime: python
+    region: oregon
+    plan: standard
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python -m backend.app.worker"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clipforge-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: clipforge-redis
+          property: connectionString
+      - key: STORAGE_ROOT
+        value: /var/data/storage
+    disk:
+      name: clipforge-storage
+      mountPath: /var/data/storage
+      sizeGB: 50
+
+  # Redis for job coordination
+  - type: redis
+    name: clipforge-redis
+    region: oregon
+    plan: starter
+    ipAllowList: []
+
+databases:
+  # Managed PostgreSQL
+  - name: clipforge-db
+    region: oregon
+    plan: starter
+    databaseName: clipforge
+    user: clipforge
