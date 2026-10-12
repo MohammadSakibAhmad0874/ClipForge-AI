@@ -1,6 +1,9 @@
 import type { Job, ClipDetail, StorageStats } from '../types';
 
-const API_BASE = '/api';
+// In production (Vercel), VITE_API_BASE_URL points to your Render backend.
+// In local dev, empty string uses Vite's proxy (/api → localhost:8005).
+const BACKEND = (import.meta.env.VITE_API_BASE_URL as string) || '';
+const API_BASE = `${BACKEND}/api`;
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
